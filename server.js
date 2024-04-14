@@ -1,27 +1,25 @@
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const connectDB = require('./config');
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import connectDB from './config.js';
 
 dotenv.config();
-connectDB();  // Connect to MongoDB
+connectDB();
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
+const server = createServer(app);
+const io = new Server(server);
 
 app.use(cors());
 app.use(bodyParser.json());
 
-// REST API endpoint
 app.get('/', (req, res) => {
   res.send('Hello from Chat App Server');
 });
 
-// WebSocket logic
 io.on('connection', (socket) => {
   console.log('New client connected');
   socket.on('disconnect', () => {
