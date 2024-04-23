@@ -21,7 +21,7 @@ rl.prompt();
 
 rl.on('line', (line) => {
     const input = line.trim().split(' ');
-    const command = input[0];
+    const command = input[0].toLowerCase();  // Using toLowerCase() to avoid case-sensitivity issues
     const args = input.slice(1);
 
     switch (command) {
@@ -31,17 +31,20 @@ rl.on('line', (line) => {
         case '/login':
             handleLogin(args);
             break;
-        case '/createChat':
+        case '/createchat':
             createChat(args);
             break;
-        case '/joinChat':
+        case '/joinchat':
             joinChat(args);
+            break;
+        case '/deletechat':
+            deleteChat(args);  // Make sure this case exists
             break;
         case '/exit':
             handleExit();
             break;
         default:
-            sendMessage(line);
+            sendMessage(line);  // Ensure this is only called when none of the above commands match
             break;
     }
     rl.prompt();
@@ -70,20 +73,34 @@ function handleRegister(args) {
 
 function handleLogin(args) {
     if (args.length === 2) {
-        axios.post(`${apiUrl}/login`, {
-            email: args[0],
-            password: args[1]
-        })
-        .then(response => {
-            userToken = response.data.token; // Save the token
-            console.log(response.data.message); // Login successful.
-            // You may want to store user data or handle chat UI here.
-            rl.prompt();
-        })
-        .catch(error => {
-            console.log(error.response ? error.response.data : 'An error occurred during login');
-            rl.prompt();
-        });
+        axios.post(`${apiUrl}/login`, { email: args[0], password: args[1] })
+            .then(response => {
+                userToken = response.data.token; // Save the token
+                const userName = response.data.username; // Assuming the server sends back the username
+
+                console.log(`${response.data.message}`); // E.g., "Login successful."
+                rl.setPrompt(`\x1b[33m${userName}>\x1b[0m `);
+
+                const chats = response.data.chats;
+                if (chats && chats.length > 0) {
+                    console.log('Your chats:');
+                    chats.forEach(chat => console.log(`- ${chat.name}`));
+                } else {
+                    console.log('You have no chats.');
+                }
+
+                // Display hints for next possible actions
+                console.log("You can:");
+                console.log('  - Create a new chat with "/createChat <chatName> <username>"');
+                console.log('  - Join an existing chat with "/joinChat <chatName>"');
+                console.log('  - Delete a chat with "/deleteChat <chatId>"');
+
+                rl.prompt();
+            })
+            .catch(error => {
+                console.log(error.response ? error.response.data : 'An error occurred during login');
+                rl.prompt();
+            });
     } else {
         console.log('Usage: /login <email> <password>');
         rl.prompt();
@@ -91,10 +108,31 @@ function handleLogin(args) {
 }
 
 function createChat(args) {
-    if (args.length === 1 && userToken) {
-        socket.emit('createChat', { name: args[0], token: userToken });
+    if (args.length === 2 && userToken) {
+        const chatName = args[0];
+        const otherUsername = args[1];
+        socket.emit('createChat', { name: chatName, otherUsername, token: userToken });
+        rl.prompt();
+    } else if (!userToken) {
+        console.log('You must be logged in to create a chat.');
+        rl.prompt();
     } else {
-        console.log('Usage: /createChat <chatName>');
+        console.log('Usage: /CreateChat <chatName> <username>');
+        rl.prompt();
+    }
+}
+
+function deleteChat(args) {
+    if (args.length === 1 && userToken) {
+        const chatName = args[0];
+        socket.emit('deleteChat', { chatName: chatName, token: userToken });
+        rl.prompt();
+    } else if (!userToken) {
+        console.log('You must be logged in to delete a chat.');
+        rl.prompt();
+    } else {
+        console.log('Usage: /deleteChat <chatName>');
+        rl.prompt();
     }
 }
 
@@ -107,6 +145,8 @@ function joinChat(args) {
         console.log('Usage: /joinChat <chatName>');
     }
 }
+
+
 
 function handleExit() {
     console.log('Exiting the chat application...');
@@ -153,6 +193,16 @@ socket.on('chatCreated', response => {
     console.log(`Chat created: ${response.chat.name}`);
     currentChat = response.chat.name;
     rl.setPrompt(`${currentChat} > `);
+});
+
+socket.on('chatDeleted', response => {
+    if (currentChat === response.chatId) {
+        currentChat = '';  // Clear current chat context
+        rl.setPrompt('ChatApp> ');
+        console.log('Current chat was deleted.');
+    }
+    console.log(response.message);
+    rl.prompt();
 });
 
 socket.on('chatJoined', response => {
