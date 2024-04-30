@@ -1,9 +1,11 @@
 import express from 'express';
-import { register, login } from '../controllers/userController.js';
+import { register, login, getUserChats } from '../controllers/userController.js';
+import { verifyToken } from '../middleware/verifyToken.js';
 
 const router = express.Router();
 
 router.post('/register', register);
 router.post('/login', login);
+router.get('/chats', verifyToken, getUserChats);
 
 export default router;

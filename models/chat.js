@@ -1,12 +1,14 @@
 import mongoose from 'mongoose';
 
 const chatSchema = new mongoose.Schema({
-  name: { type: String, required: true },  // This is the new field for the chat name
-  participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  created_at: { type: Date, default: Date.now },
-  messages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Message' }]
+    name: { type: String, required: true },
+    participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    messages: [{
+        sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        message: String,
+        timestamp: Date
+    }]
 });
 
 const Chat = mongoose.model('Chat', chatSchema);
-
-export default Chat;
+export default Chat;  

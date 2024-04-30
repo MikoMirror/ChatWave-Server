@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+export const apiUrl = 'http://localhost:3000';
+
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
