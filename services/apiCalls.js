@@ -2,20 +2,21 @@ import axios from 'axios';
 import { apiUrl } from '../config.js';
 
 export const register = async (username, email, password) => {
-  const response = await axios.post(`${apiUrl}/user/register`, { username, email, password });
-  return response.data; // Assume this includes username and token
+  const response = await axios.post(`${apiUrl}/users/register`, { username, email, password });
+  return response.data;
 };
 
 export const login = async (email, password) => {
-  const response = await axios.post(`${apiUrl}/user/login`, { email, password });
-  return response.data; // Assume this includes username and token
+  const response = await axios.post(`${apiUrl}/users/login`, { email, password });
+  return response.data;
 };
 
 export const createChat = async (chatName, anotherUsername) => {
   const response = await axios.post(`${apiUrl}/chat/create`, { chatName, anotherUsername });
-  return response.data; // Assume this includes chat info
+  return response.data;
 };
 
 export const logout = async () => {
-  await axios.post(`${apiUrl}/user/logout`); // Clean up local session data here, if necessary
+  const response = await axios.post(`${apiUrl}/users/logout`);
+  return response.data;
 };

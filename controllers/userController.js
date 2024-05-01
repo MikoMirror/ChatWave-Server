@@ -12,7 +12,14 @@ export const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({ username, email, hashed_password: hashedPassword });
         await newUser.save();
-        res.status(201).json({ message: 'Registration successful.' });
+
+        const token = jwt.sign(
+            { userId: newUser._id, username: newUser.username, email: newUser.email }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '24h' }
+        );
+        
+        res.status(201).json({ message: 'Registration successful.', token });
     } catch (error) {
         res.status(500).json({ message: 'Registration failed.' });
     }
@@ -27,7 +34,12 @@ export const login = async (req, res) => {
         const isMatch = bcrypt.compareSync(password, user.hashed_password);
         if (!isMatch) return res.status(401).json({ message: 'Invalid password.' });
 
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+        // Include more user-specific information if needed
+        const token = jwt.sign(
+            { userId: user._id, username: user.username, email: user.email }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '24h' }
+        );
         res.json({ token, username: user.username, message: 'Login successful.' });
     } catch (error) {
         res.status(500).json({ message: 'Login failed.' });
@@ -46,4 +58,8 @@ export const getUserChats = async (req, res) => {
     } catch (error) {
         res.status(500).send('Server error');
     }
+};
+
+export const logout = (req, res) => {
+    res.status(200).send({ message: 'Logged out successfully' });
 };

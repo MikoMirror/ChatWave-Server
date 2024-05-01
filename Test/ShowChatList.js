@@ -8,7 +8,7 @@ const apiUrl = 'http://localhost:3000';
 const loginUrl = `${apiUrl}/user/login`;
 const chatUrl = `${apiUrl}/chat`;
 
-// Replace these with the actual login credentials
+
 const userCredentials = {
   email: 'miko@gmail.com',
   password: '1234'
@@ -17,10 +17,10 @@ const userCredentials = {
 async function loginAndGetToken(credentials) {
   try {
     const response = await axios.post(loginUrl, credentials);
-    return response.data.token; // The server should send back the token here
+    return response.data.token; 
   } catch (error) {
     console.error('Login error:', error.response?.data || error.message);
-    process.exit(1); // Exit if login fails
+    process.exit(1); 
   }
 }
 
@@ -31,10 +31,10 @@ async function fetchChats(token) {
         Authorization: `Bearer ${token}`
       }
     });
-    return response.data; // The chats should be here
+    return response.data; 
   } catch (error) {
     console.error('Error fetching chats:', error.response?.data || error.message);
-    process.exit(1); // Exit if fetching chats fails
+    process.exit(1); 
   }
 }
 

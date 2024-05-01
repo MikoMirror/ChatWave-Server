@@ -1,29 +1,39 @@
 import { login, register, createChat, logout } from '../services/apiCalls.js';
 import { displayCommands, updatePrompt } from '../utils/uiHelpers.js';
+import { displayUserChats } from './displayUserChats.js';
+
+let userToken = ''; // Store user token globally within the session context
 
 const executeCommand = async (command, args, rl) => {
     try {
         switch (command.toLowerCase()) {
             case '/register':
                 const userReg = await register(...args);
+                userToken = userReg.token; // Store the token returned by the API
                 updatePrompt(rl, userReg.username, true);
                 displayCommands(true);
                 break;
             case '/login':
                 const userLog = await login(...args);
+                userToken = userLog.token; // Update the global token
                 updatePrompt(rl, userLog.username, true);
                 displayCommands(true);
-                displayUserChats(rl, userToken)
+                await displayUserChats(rl, userToken); // Now this should work if displayUserChats is imported correctly
                 break;
             case '/createchat':
-                const chat = await createChat(...args);
+                if (!userToken) {
+                    console.log("You need to be logged in to create a chat.");
+                    break;
+                }
+                const chat = await createChat(...args, userToken);
                 console.log(`Chat created: ${chat.name}`);
                 break;
-            case '/logout':
-                await logout();
-                updatePrompt(rl, '', false);
-                displayCommands(false);
-                break;
+                case '/logout':
+                    userToken = ''; // Discard the token
+                    console.log('You have been logged out successfully.');
+                    updatePrompt(rl, '', false);
+                    displayCommands(false);
+                    break;
             default:
                 console.log('Unknown command:', command);
         }
@@ -34,25 +44,4 @@ const executeCommand = async (command, args, rl) => {
     }
 };
 
-const displayUserChats = async (rl, userToken) => {
-    try {
-        const response = await axios.get('http://localhost:3000/user/chats', {
-            headers: { 'Authorization': `Bearer ${userToken}` }
-        });
-
-        console.log(response.data.message); 
-        response.data.chats.forEach(chatName => {
-            console.log(`-${chatName}`);
-        });
-    } catch (error) {
-        console.error('Error fetching chats:', error.response?.data || error.message);
-    } finally {
-        rl.prompt();
-    }
-};
-
-
-export const handleCommand = (line, rl) => {
-    const [command, ...args] = line.trim().split(' ');
-    executeCommand(command, args, rl);
-};
+export default executeCommand;
