@@ -28,21 +28,31 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
     const { email, password } = req.body;
     try {
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ message: 'User not found.' });
+        const user = await User.findOne({ email }).select('+hashed_password');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
 
         const isMatch = bcrypt.compareSync(password, user.hashed_password);
-        if (!isMatch) return res.status(401).json({ message: 'Invalid password.' });
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid password.' });
+        }
 
-        // Include more user-specific information if needed
-        const token = jwt.sign(
-            { userId: user._id, username: user.username, email: user.email }, 
-            process.env.JWT_SECRET, 
-            { expiresIn: '24h' }
-        );
-        res.json({ token, username: user.username, message: 'Login successful.' });
+        const chats = await Chat.find({ participants: user._id }).populate('participants', 'username');
+
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+        res.json({
+            token,
+            username: user.username,
+            chats: chats.map(chat => ({
+                id: chat._id,
+                name: chat.name,
+                participants: chat.participants.map(p => p.username) // Only send participant usernames
+            })),
+            message: 'Login successful.'
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Login failed.' });
+        res.status(500).json({ message: 'Login failed.', error: error.message });
     }
 };
 

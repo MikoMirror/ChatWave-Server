@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { apiUrl } from '../config.js'; // Adjust the path if necessary
+import { apiUrl } from '../config.js'; 
 
 export const displayUserChats = async (rl, userToken) => {
     try {
@@ -7,8 +7,7 @@ export const displayUserChats = async (rl, userToken) => {
             headers: { 'Authorization': `Bearer ${userToken}` }
         });
 
-        console.log('API Response:', response.data); // Log the full response data
-
+        console.log('API Response:', response.data); 
         response.data.forEach(chat => {
             console.log(`- ${chat.name}`);
         });

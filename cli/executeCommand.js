@@ -1,24 +1,42 @@
 import { login, register, createChat, logout } from '../services/apiCalls.js';
 import { displayCommands, updatePrompt } from '../utils/uiHelpers.js';
-import { displayUserChats } from './displayUserChats.js';
 
-let userToken = ''; // Store user token globally within the session context
+
+let userToken = ''; 
+let isLoggedIn = false;
+let username = '';
+let currentChat = '';
 
 const executeCommand = async (command, args, rl) => {
     try {
         switch (command.toLowerCase()) {
             case '/register':
-                const userReg = await register(...args);
-                userToken = userReg.token; // Store the token returned by the API
-                updatePrompt(rl, userReg.username, true);
-                displayCommands(true);
-                break;
+            const userReg = await register(...args);
+            console.log(userReg.message); 
+            rl.prompt();  
+            break;
             case '/login':
                 const userLog = await login(...args);
-                userToken = userLog.token; // Update the global token
-                updatePrompt(rl, userLog.username, true);
-                displayCommands(true);
-                await displayUserChats(rl, userToken); // Now this should work if displayUserChats is imported correctly
+                if (userLog.token) {
+                    userToken = userLog.token; 
+                    username = userLog.username; 
+                    isLoggedIn = true; 
+                    updatePrompt(rl, username, isLoggedIn);
+
+                    console.log("Your chats:");
+                    if (userLog.chats.length > 0) {
+                        userLog.chats.forEach(chat => {
+                            console.log(`- ${chat.name} with ${chat.participants.join(', ')}`);
+                            if (!currentChat) currentChat = chat.name;
+                        });
+                    } else {
+                        console.log("No chats available.");
+                    }
+                    displayCommands(isLoggedIn, currentChat);
+                } else {
+                    console.log("Login failed.");
+                    displayCommands(isLoggedIn, currentChat);
+                }
                 break;
             case '/createchat':
                 if (!userToken) {
@@ -29,11 +47,14 @@ const executeCommand = async (command, args, rl) => {
                 console.log(`Chat created: ${chat.name}`);
                 break;
                 case '/logout':
-                    userToken = ''; // Discard the token
-                    console.log('You have been logged out successfully.');
-                    updatePrompt(rl, '', false);
-                    displayCommands(false);
-                    break;
+                    await logout(userToken);
+                    userToken = '';
+                    username = '';
+                    isLoggedIn = false;
+                    currentChat = '';
+                    updatePrompt(rl, '', isLoggedIn);
+                    displayCommands(isLoggedIn, currentChat);
+                break;
             default:
                 console.log('Unknown command:', command);
         }

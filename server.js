@@ -1,6 +1,7 @@
 import express from 'express';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import { verifyToken } from './middleware/verifyToken.js';
 import dotenv from 'dotenv';
 import connectDB from './config.js';
 import userRoutes from './routes/userRoutes.js';
@@ -16,6 +17,7 @@ connectDB();
 const app = express();
 app.use(express.json()); 
 app.use('/users', userRoutes);
+
 app.use('/chat', chatRoutes);
 app.use((err, req, res, next) => {
     console.error(err.stack);
