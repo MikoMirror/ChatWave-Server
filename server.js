@@ -8,16 +8,13 @@ import userRoutes from './routes/userRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import socketHandler from './sockets/socketHandler.js';
 
-
 dotenv.config();
-
 
 connectDB();
 
 const app = express();
 app.use(express.json()); 
 app.use('/users', userRoutes);
-
 app.use('/chat', chatRoutes);
 app.use((err, req, res, next) => {
     console.error(err.stack);
