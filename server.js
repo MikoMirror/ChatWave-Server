@@ -13,7 +13,7 @@ const io = new Server(server);
 connectDB();
 
 app.get('/', (req, res) => {
-  res.send('Welcome to the server!'); // Simple response
+  res.send('Welcome to the server!'); 
 });
 
 app.use('/api/user', userRoutes); 

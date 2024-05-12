@@ -62,7 +62,7 @@ const loginUser = async () => {
     const data = await response.json();
 
     if (response.ok) {
-      console.log(data.message); // You might want to handle the token/session data here.
+      console.log(data.message); 
     } else {
       console.error(data.message);
     }
