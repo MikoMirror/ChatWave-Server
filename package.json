@@ -22,7 +22,8 @@
     "mongodb": "^6.6.1",
     "mongoose": "^8.3.4",
     "node-fetch": "^3.3.2",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5"
   },
   "devDependencies": {
     "chai": "^5.1.1",

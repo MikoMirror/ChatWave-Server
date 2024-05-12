@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post('/register', async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password } = req.body; 
 
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
@@ -21,7 +21,7 @@ router.post('/register', async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     console.log("Hashed password:", hashedPassword); 
-    
+
     const newUser = new User({ username, email, password: hashedPassword });
     await newUser.save();
 
@@ -53,5 +53,20 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.post('/findByUsername', async (req, res) => {
+  try {
+    const { username } = req.body;
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 export default router;
