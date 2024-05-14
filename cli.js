@@ -3,6 +3,7 @@ import fetch from 'node-fetch';
 import io from 'socket.io-client';
 import jwt from 'jsonwebtoken';
 
+
 const API_BASE_URL = 'http://localhost:3000/api';
 const rl = readline.createInterface({
   input: process.stdin,

@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import chatRoutes from './routes/ChatRoutes.js';
 import Chat from './models/Chat.js';
 import moment from 'moment';
+import User from './models/User.js';
 
 const app = express();
 app.use(express.json());
@@ -67,11 +68,41 @@ app.get('/', (req, res) => {
       }
     });
   
-    socket.on('chat-message', ({ chatId, message, sender }) => {
-      const userId = socket.user; 
-      io.to(chatId).emit('chat-message', { sender, message });
+    socket.on('chat-message', async ({ chatId, message, sender }) => {
+      try {
+        const userId = socket.user;
+        const senderUser = await User.findOne({ username: sender });
+    
+        if (!senderUser) {
+          return socket.emit('error', { message: 'Sender not found' });
+        }
+    
+        const chat = await Chat.findById(chatId);
+    
+        if (!chat) {
+          return socket.emit('error', { message: 'Chat not found' });
+        }
+    
+        const newMessage = {
+          sender: senderUser._id,
+          message,
+          timestamp: new Date(),
+        };
+    
+        chat.messages.push(newMessage);
+        await chat.save();
+    
+        io.to(chatId).emit('chat-message', {
+          sender,
+          message,
+          timestamp: newMessage.timestamp,
+        });
+      } catch (error) {
+        console.error('Error sending chat message:', error);
+        socket.emit('error', { message: 'Error sending chat message' });
+      }
     });
-  
+    
     socket.on('private-message', async ({ to, message }) => {
       try {
         const recipientSocketId = activeUsers[to];
