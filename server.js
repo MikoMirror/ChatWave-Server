@@ -5,6 +5,8 @@ import connectDB from './config/dbConnection.js';
 import userRoutes from './routes/UserRoutes.js';
 import jwt from 'jsonwebtoken';
 import chatRoutes from './routes/ChatRoutes.js';
+import Chat from './models/Chat.js';
+import moment from 'moment';
 
 const app = express();
 app.use(express.json());
@@ -42,8 +44,27 @@ app.get('/', (req, res) => {
       }
     });
   
-    socket.on('join-chat', (chatId) => {
-      socket.join(chatId);
+    socket.on('join-chat', async (chatId) => {
+      try {
+        const chat = await Chat.findById(chatId).populate('participants', 'username');
+        if (!chat) {
+          return socket.emit('error', { message: 'Chat not found' });
+        }
+  
+        socket.join(chatId);
+  
+        const chatHistory = chat.messages.map(message => {
+          const timestamp = moment(message.timestamp).format('HH:mm');
+          const username = chat.participants.find(p => p._id.toString() === message.sender.toString())?.username;
+          return `[${timestamp}]<${username}> ${message.message}`;
+        });
+  
+        socket.emit('chat-history', chatHistory);
+  
+      } catch (error) {
+        console.error('Error joining chat:', error);
+        socket.emit('error', { message: 'Error joining chat' });
+      }
     });
   
     socket.on('chat-message', ({ chatId, message, sender }) => {

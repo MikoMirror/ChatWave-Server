@@ -15,7 +15,7 @@ router.post('/create', async (req, res) => {
 
         const newChat = new Chat({
             name,
-            participants: validParticipants.map(user => user._id) // Store IDs
+            participants: validParticipants.map(user => user._id) 
         });
         await newChat.save();
         res.status(201).json({ message: 'Chat created successfully', chat: newChat }); 
@@ -27,7 +27,8 @@ router.post('/create', async (req, res) => {
 router.get('/user/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const chats = await Chat.find({ participants: userId }).populate('participants');
+    const chats = await Chat.find({ participants: userId })
+      .populate('participants', 'username'); 
     res.status(200).json({ chats });
   } catch (error) {
     console.error(error);

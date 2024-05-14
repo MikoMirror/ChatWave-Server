@@ -145,6 +145,17 @@ const startChatRoom = (chat, socket, username) => {
   console.log(`\n----- Chat: ${chat.name} -----`);
   socket.emit('join-chat', chat._id); 
 
+  socket.on('chat-history', (chatHistory) => {
+    chatHistory.forEach(message => {
+      const match = message.match(/\[.*\]<(.*)> (.*)/);
+      const formattedMessage = match ? 
+        `${message.replace(match[1], `\x1b[34m${match[1]}\x1b[0m`)}` : 
+        message;
+      console.log(formattedMessage);
+    });
+    rl.prompt();
+  });
+
   const sendMessage = () => {
     rl.question('> ', (message) => {
       socket.emit('chat-message', {
