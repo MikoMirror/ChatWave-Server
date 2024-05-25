@@ -17,28 +17,26 @@ const ask = (question) =>
   });
 
 
-const registerUser = async () => {
-  const username = await ask('Enter username: ');
-  const email = await ask('Enter email: ');
-  const password = await ask('Enter password: ');
-  try {
-    const response = await fetch(`${API_BASE_URL}/user/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password }),
-    });
-    const data = await response.json();
-    if (response.ok) {
-      console.log(data.message);
-    } else {
-      console.error(data.message);
-    }
-  } catch (error) {
-    console.error('Error registering user:', error);
-  } finally {
-    rl.close();
-  }
-};
+  const registerUser = async () => {
+    const username = await ask('Enter username: ');
+    const email = await ask('Enter email: ');
+    const password = await ask('Enter password: ');
+    try {
+      const response = await fetch(`${API_BASE_URL}/user/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        console.log(data.message);
+      } else {
+        console.error(data.message);
+      }
+    } catch (error) {
+      console.error('Error registering user:', error);
+    } 
+  };
 
 
 const loginUser = async () => {
@@ -57,8 +55,10 @@ const loginUser = async () => {
       socket.emit('authenticate', data.token);
       const userId = getUserIdFromToken(data.token);
       fetchAndDisplayChats(userId, socket, username); 
+      return true;
     } else {
       console.error(data.message);
+      return false; 
     }
   } catch (error) {
     console.error('Error logging in:', error);
@@ -106,7 +106,6 @@ const createNewChat = async (userId, socket, username) => {
   const chatName = await ask('Enter chat name: ');
   const participantUsername = await ask('Enter the username of the person you want to chat with: ');
   try {
-  
     const response = await fetch(`${API_BASE_URL}/user/findByUsername`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -115,12 +114,12 @@ const createNewChat = async (userId, socket, username) => {
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Error finding user:', errorData.message);
-      return;
+      fetchAndDisplayChats(userId, socket, username); 
+      return; 
     }
     const { user: participant } = await response.json();
     const participantId = participant._id;
 
-    
     const createChatResponse = await fetch(`${API_BASE_URL}/chat/create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -196,16 +195,17 @@ const getUserIdFromToken = (token) => {
 
 const main = async () => {
   console.log("Welcome to the Chat CLI!");
-  const action = await ask("Do you want to (1) register or (2) login? ");
-  if (action === "1") {
-    await registerUser();
-    main();
-  } else if (action === "2") {
-    await loginUser();
-  } else {
-    console.error("Invalid choice. Please select 1 or 2.");
-    rl.close();
-  }
-};
+  let loggedIn = false;
 
+  while (!loggedIn) { 
+    const action = await ask("Do you want to (1) register or (2) login? ");
+    if (action === "1") {
+      await registerUser();
+    } else if (action === "2") {
+      loggedIn = await loginUser(); 
+    } else {
+      console.error("Invalid choice. Please select 1 or 2.");
+    }
+  } 
+};
 main();
